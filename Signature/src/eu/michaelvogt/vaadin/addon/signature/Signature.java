@@ -1,101 +1,102 @@
 package eu.michaelvogt.vaadin.addon.signature;
 
-import org.vaadin.hezamu.canvas.Canvas;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-import com.vaadin.server.ExternalResource;
+import com.vaadin.ui.AbstractComponentContainer;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
-import com.vaadin.ui.CssLayout;
-import com.vaadin.ui.CustomComponent;
-import com.vaadin.ui.Image;
+import com.vaadin.ui.Component;
 
-public class Signature extends CustomComponent {
+import eu.michaelvogt.vaadin.addon.signature.SignatureUI.SaveListener;
+import eu.michaelvogt.vaadin.addon.signature.client.signature.SignatureServerRpc;
+import eu.michaelvogt.vaadin.addon.signature.client.signature.SignatureState;
+
+public class Signature extends AbstractComponentContainer {
     public static final String SIGNATURE_STYLE = "signature";
 
-    private CssLayout mainLayout;
-    private Canvas canvas;
-    private Image signature;
+    private List<Component> children = new ArrayList<Component>();
 
-    private Button signButton;
-    private Button clearButton;
+    private Button redoButton;
+    private SaveListener saveListener;
 
-    private boolean isFix;
+    private SignatureServerRpc rpc = new SignatureServerRpcImpl();
 
     public Signature() {
         buildMainLayout();
-        setCompositionRoot(mainLayout);
-
-        // placeholder for signature
-        signature.setSource(new ExternalResource("VAADIN/signature.jpg"));
+        registerRpc(rpc);
     }
 
-    public void setSignature(Image signature) {
-        this.signature = signature;
-
-        showSignature();
+    @Override
+    public SignatureState getState() {
+        return (SignatureState) super.getState();
     }
 
-    public void fixSignature(boolean isFix) {
-        this.isFix = isFix;
+    public void addSaveListener(SaveListener saveListener) {
+        this.saveListener = saveListener;
+    }
+
+    @Override
+    public void addComponent(Component c) {
+        children.add(c);
+        super.addComponent(c);
+        markAsDirty();
+    }
+
+    @Override
+    public void removeComponent(Component c) {
+        children.remove(c);
+        super.removeComponent(c);
+        markAsDirty();
+    }
+
+    @Override
+    public void replaceComponent(Component oldComponent, Component newComponent) {
+        int index = children.indexOf(oldComponent);
+        if (index != -1) {
+            children.remove(index);
+            children.add(index, newComponent);
+            fireComponentDetachEvent(oldComponent);
+            fireComponentAttachEvent(newComponent);
+            markAsDirty();
+        }
+    }
+
+    @Override
+    public int getComponentCount() {
+        return children.size();
+    }
+
+    @Override
+    public Iterator<Component> iterator() {
+        return children.iterator();
     }
 
     private void buildMainLayout() {
-        mainLayout = new CssLayout();
-        mainLayout.setStyleName(SIGNATURE_STYLE);
-
-        signButton = new Button("Sign");
-        signButton.addClickListener(new SaveSignatureListener());
-        mainLayout.addComponent(signButton);
-
-        clearButton = new Button("Clear");
-        clearButton.addClickListener(new ClearSignatureListener());
-        mainLayout.addComponent(clearButton);
-
-        signature = new Image();
-
-        showCanvas();
+        redoButton = new Button("Redo");
+        redoButton.addClickListener(new RedoSignatureListener());
     }
 
-    private void showSignature() {
-        mainLayout.removeComponent(canvas);
-        mainLayout.addComponent(signature);
-
-        signButton.setVisible(false);
-        clearButton.setVisible(!isFix);
-    }
-
-    private void showCanvas() {
-        if (null != signature) {
-            mainLayout.removeComponent(signature);
-        }
-
-        canvas = new Canvas();
-        canvas.setSizeFull();
-
-        canvas.setFillStyle("#000000");
-        canvas.fillText("Please sign here", 10, 10, canvas.getWidth());
-
-        mainLayout.addComponent(canvas);
-
-        signButton.setVisible(true);
-        clearButton.setVisible(true);
-    }
-
-    private class ClearSignatureListener implements ClickListener {
+    private class RedoSignatureListener implements ClickListener {
         @Override
         public void buttonClick(ClickEvent event) {
-            showCanvas();
+            // Check if redo is allowed, and notify the client when it is
+            removeComponent(redoButton);
+            getState().isEditing = true;
         }
     }
 
-    private class SaveSignatureListener implements ClickListener {
+    private class SignatureServerRpcImpl implements SignatureServerRpc {
         @Override
-        public void buttonClick(ClickEvent event) {
-            // get the pixeldata from the canvas
-            // store in image component
-            // switch to image component
-            showSignature();
+        public void saveSignature(String imageData) {
+            addComponent(redoButton);
+            getState().isEditing = false;
+
+            if (null != saveListener) {
+                saveListener.onSave(imageData);
+            }
         }
     }
 }
