@@ -1,4 +1,4 @@
-package eu.michaelvogt.vaadin.addon.signature.client.signature;
+package eu.michaelvogt.vaadin.addon.signature.shared.signature;
 
 public class SignatureState extends com.vaadin.shared.AbstractComponentState {
     /**
@@ -9,6 +9,6 @@ public class SignatureState extends com.vaadin.shared.AbstractComponentState {
     /**
      * Defines the editing state of the Widget
      */
-    public boolean isEditing;
+    public boolean isEditable = false;
 
 }

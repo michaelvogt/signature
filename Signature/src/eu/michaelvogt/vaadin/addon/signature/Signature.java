@@ -11,15 +11,15 @@ import com.vaadin.ui.Button.ClickListener;
 import com.vaadin.ui.Component;
 
 import eu.michaelvogt.vaadin.addon.signature.SignatureUI.SaveListener;
-import eu.michaelvogt.vaadin.addon.signature.client.signature.SignatureServerRpc;
-import eu.michaelvogt.vaadin.addon.signature.client.signature.SignatureState;
+import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureServerRpc;
+import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureState;
 
 public class Signature extends AbstractComponentContainer {
     public static final String SIGNATURE_STYLE = "signature";
 
     private List<Component> children = new ArrayList<Component>();
 
-    private Button redoButton;
+    private Button editButton;
     private SaveListener saveListener;
 
     private SignatureServerRpc rpc = new SignatureServerRpcImpl();
@@ -74,29 +74,44 @@ public class Signature extends AbstractComponentContainer {
         return children.iterator();
     }
 
-    private void buildMainLayout() {
-        redoButton = new Button("Redo");
-        redoButton.addClickListener(new RedoSignatureListener());
+    public void setEditable(Boolean isEditable) {
+        if (isEditable) {
+            addComponent(editButton);
+        } else {
+            removeComponent(editButton);
+            getState().isEditable = false;
+        }
     }
 
-    private class RedoSignatureListener implements ClickListener {
+    private void buildMainLayout() {
+        editButton = new Button("Edit");
+        editButton.addClickListener(new EditSignatureListener());
+    }
+
+    private class EditSignatureListener implements ClickListener {
         @Override
         public void buttonClick(ClickEvent event) {
-            // Check if redo is allowed, and notify the client when it is
-            removeComponent(redoButton);
-            getState().isEditing = true;
+            removeComponent(editButton);
+            getState().isEditable = true;
         }
     }
 
     private class SignatureServerRpcImpl implements SignatureServerRpc {
         @Override
         public void saveSignature(String imageData) {
-            addComponent(redoButton);
-            getState().isEditing = false;
+            addComponent(editButton);
+            getState().isEditable = false;
+            getState().signature = imageData;
 
             if (null != saveListener) {
                 saveListener.onSave(imageData);
             }
+        }
+
+        @Override
+        public void cancelSigning() {
+            addComponent(editButton);
+            getState().isEditable = false;
         }
     }
 }

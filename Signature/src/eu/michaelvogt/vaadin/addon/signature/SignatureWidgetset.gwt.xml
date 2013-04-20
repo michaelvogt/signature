@@ -38,5 +38,9 @@
     -->
     <!-- <set-configuration-property name="devModeRedirectEnabled" value="true" /> -->
 
+	<source path="client"/>
+	<source path="shared"/>
     
+
+    <inherits name="eu.michaelvogt.vaadin.attribute.AttributeWidgetset" />
 </module>

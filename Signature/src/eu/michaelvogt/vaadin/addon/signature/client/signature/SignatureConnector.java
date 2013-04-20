@@ -14,6 +14,8 @@ import com.vaadin.client.ui.AbstractComponentContainerConnector;
 import com.vaadin.shared.ui.Connect;
 
 import eu.michaelvogt.vaadin.addon.signature.Signature;
+import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureServerRpc;
+import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureState;
 
 @Connect(Signature.class)
 public class SignatureConnector extends AbstractComponentContainerConnector {
@@ -24,6 +26,15 @@ public class SignatureConnector extends AbstractComponentContainerConnector {
         getWidget().addSaveHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 rpc.saveSignature(getWidget().getSignatureData());
+            }
+        });
+
+        getWidget().addCancelHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent event) {
+                getWidget().setSignature(getState().signature);
+                getWidget().setEditable(false);
+                rpc.cancelSigning();
             }
         });
     }
@@ -47,7 +58,7 @@ public class SignatureConnector extends AbstractComponentContainerConnector {
     public void onStateChanged(StateChangeEvent stateChangeEvent) {
         super.onStateChanged(stateChangeEvent);
 
-        // TODO: Update state of Widget
+        getWidget().setEditable(getState().isEditable);
     }
 
     @Override
