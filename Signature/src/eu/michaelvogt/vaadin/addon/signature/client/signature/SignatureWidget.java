@@ -17,13 +17,14 @@ import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.ui.VButton;
+import com.vaadin.client.ui.VCustomComponent;
 
-public class SignatureWidget extends Composite implements MouseDownHandler,
-        MouseUpHandler {
+import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureData;
+
+public class SignatureWidget extends VCustomComponent {
     public static final String CLASSNAME = "signature";
     private List<Widget> externalWidgets = new ArrayList<Widget>();
 
@@ -39,11 +40,19 @@ public class SignatureWidget extends Composite implements MouseDownHandler,
     private HandlerRegistration stopDrawHandler;
     private HandlerRegistration drawHandler;
 
+    private MouseUpHandler stopHandler;
+    private MouseDownHandler startHandler;
+
+    private SignatureData imageCache;
+
     public SignatureWidget() {
         panel = new FlowPanel();
-        initWidget(panel);
+        super.add(panel);
 
         setStyleName(CLASSNAME);
+
+        startHandler = new StartHandler();
+        stopHandler = new StopHandler();
 
         if (Canvas.isSupported()) {
             setupWidget();
@@ -60,10 +69,38 @@ public class SignatureWidget extends Composite implements MouseDownHandler,
         cancelButton.addClickHandler(handler);
     }
 
-    public String getSignatureData() {
-        return canvas.toDataUrl();
+    public SignatureData getSignatureData() {
+        return new SignatureData(canvas.toDataUrl());
     }
 
+    public void setIsEditing(boolean isEditable) {
+        if (isEditable) {
+            imageCache = getSignatureData();
+
+            startDrawHandler = canvas.addMouseDownHandler(startHandler);
+            stopDrawHandler = canvas.addMouseUpHandler(stopHandler);
+
+            panel.add(cancelButton);
+            panel.add(clearButton);
+            panel.add(saveButton);
+        } else {
+            if (null != startDrawHandler) {
+                startDrawHandler.removeHandler();
+                startDrawHandler = null;
+            }
+
+            if (null != stopDrawHandler) {
+                stopDrawHandler.removeHandler();
+                startDrawHandler = null;
+            }
+
+            panel.remove(cancelButton);
+            panel.remove(clearButton);
+            panel.remove(saveButton);
+        }
+    }
+
+    @Override
     public void clear() {
         for (Widget widget : externalWidgets) {
             widget.removeFromParent();
@@ -71,27 +108,10 @@ public class SignatureWidget extends Composite implements MouseDownHandler,
         externalWidgets.clear();
     }
 
+    @Override
     public void add(Widget widget) {
         panel.add(widget);
         externalWidgets.add(widget);
-    }
-
-    public void setEditable(boolean isEditable) {
-        if (isEditable) {
-            startDrawHandler = canvas.addMouseDownHandler(this);
-            stopDrawHandler = canvas.addMouseUpHandler(this);
-
-            panel.add(cancelButton);
-            panel.add(clearButton);
-            panel.add(saveButton);
-        } else {
-            startDrawHandler.removeHandler();
-            stopDrawHandler.removeHandler();
-
-            panel.remove(cancelButton);
-            panel.remove(clearButton);
-            panel.remove(saveButton);
-        }
     }
 
     private void setupWidget() {
@@ -108,24 +128,12 @@ public class SignatureWidget extends Composite implements MouseDownHandler,
         saveButton = new VButton();
         saveButton.setText("Save");
         saveButton.addStyleName(CLASSNAME + "-save");
-        saveButton.addClickHandler(new EditFinishedHandler());
+        saveButton.addClickHandler(new SaveHandler());
 
         cancelButton = new VButton();
         cancelButton.setText("Cancel");
         cancelButton.addStyleName(CLASSNAME + "-cancel");
-        cancelButton.addClickHandler(new EditFinishedHandler());
-    }
-
-    @Override
-    public void onMouseUp(MouseUpEvent event) {
-        drawHandler.removeHandler();
-    }
-
-    @Override
-    public void onMouseDown(MouseDownEvent event) {
-        canvasContext.beginPath();
-        canvasContext.moveTo(event.getX(), event.getY());
-        drawHandler = canvas.addMouseMoveHandler(new DrawHandler());
+        cancelButton.addClickHandler(new CancelHandler());
     }
 
     public void setSignature(String signature) {
@@ -157,10 +165,34 @@ public class SignatureWidget extends Composite implements MouseDownHandler,
         }
     }
 
-    private class EditFinishedHandler implements ClickHandler {
+    private class SaveHandler implements ClickHandler {
         @Override
         public void onClick(ClickEvent event) {
-            setEditable(false);
+            setIsEditing(false);
+        }
+    }
+
+    private class CancelHandler implements ClickHandler {
+        @Override
+        public void onClick(ClickEvent event) {
+            setSignature(imageCache.getDataUrl());
+            setIsEditing(false);
+        }
+    }
+
+    private class StopHandler implements MouseUpHandler {
+        @Override
+        public void onMouseUp(MouseUpEvent event) {
+            drawHandler.removeHandler();
+        }
+    }
+
+    private class StartHandler implements MouseDownHandler {
+        @Override
+        public void onMouseDown(MouseDownEvent event) {
+            canvasContext.beginPath();
+            canvasContext.moveTo(event.getX(), event.getY());
+            drawHandler = canvas.addMouseMoveHandler(new DrawHandler());
         }
     }
 }

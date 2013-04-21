@@ -1,24 +1,21 @@
 package eu.michaelvogt.vaadin.addon.signature;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
-import com.vaadin.ui.AbstractComponentContainer;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
 import com.vaadin.ui.Component;
+import com.vaadin.ui.CssLayout;
+import com.vaadin.ui.CustomField;
 
 import eu.michaelvogt.vaadin.addon.signature.SignatureUI.SaveListener;
+import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureData;
 import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureServerRpc;
 import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureState;
 
-public class Signature extends AbstractComponentContainer {
+public class Signature extends CustomField<SignatureData> {
     public static final String SIGNATURE_STYLE = "signature";
 
-    private List<Component> children = new ArrayList<Component>();
-
+    private CssLayout layout;
     private Button editButton;
     private SaveListener saveListener;
 
@@ -27,6 +24,16 @@ public class Signature extends AbstractComponentContainer {
     public Signature() {
         buildMainLayout();
         registerRpc(rpc);
+    }
+
+    @Override
+    protected Component initContent() {
+        return layout;
+    }
+
+    @Override
+    public Class getType() {
+        return SignatureData.class;
     }
 
     @Override
@@ -39,69 +46,39 @@ public class Signature extends AbstractComponentContainer {
     }
 
     @Override
-    public void addComponent(Component c) {
-        children.add(c);
-        super.addComponent(c);
-        markAsDirty();
-    }
+    public void setReadOnly(boolean readOnly) {
+        super.setReadOnly(readOnly);
 
-    @Override
-    public void removeComponent(Component c) {
-        children.remove(c);
-        super.removeComponent(c);
-        markAsDirty();
-    }
-
-    @Override
-    public void replaceComponent(Component oldComponent, Component newComponent) {
-        int index = children.indexOf(oldComponent);
-        if (index != -1) {
-            children.remove(index);
-            children.add(index, newComponent);
-            fireComponentDetachEvent(oldComponent);
-            fireComponentAttachEvent(newComponent);
-            markAsDirty();
-        }
-    }
-
-    @Override
-    public int getComponentCount() {
-        return children.size();
-    }
-
-    @Override
-    public Iterator<Component> iterator() {
-        return children.iterator();
-    }
-
-    public void setEditable(Boolean isEditable) {
-        if (isEditable) {
-            addComponent(editButton);
+        if (readOnly) {
+            getState().isEditing = false;
+            layout.removeComponent(editButton);
         } else {
-            removeComponent(editButton);
-            getState().isEditable = false;
+            layout.addComponent(editButton);
         }
     }
 
     private void buildMainLayout() {
+        layout = new CssLayout();
+
         editButton = new Button("Edit");
         editButton.addClickListener(new EditSignatureListener());
+        layout.addComponent(editButton);
     }
 
     private class EditSignatureListener implements ClickListener {
         @Override
         public void buttonClick(ClickEvent event) {
-            removeComponent(editButton);
-            getState().isEditable = true;
+            layout.removeComponent(editButton);
+            getState().isEditing = true;
         }
     }
 
     private class SignatureServerRpcImpl implements SignatureServerRpc {
         @Override
-        public void saveSignature(String imageData) {
-            addComponent(editButton);
-            getState().isEditable = false;
-            getState().signature = imageData;
+        public void saveSignature(SignatureData imageData) {
+            layout.addComponent(editButton);
+            getState().isEditing = false;
+            setValue(imageData);
 
             if (null != saveListener) {
                 saveListener.onSave(imageData);
@@ -110,8 +87,8 @@ public class Signature extends AbstractComponentContainer {
 
         @Override
         public void cancelSigning() {
-            addComponent(editButton);
-            getState().isEditable = false;
+            layout.addComponent(editButton);
+            getState().isEditing = false;
         }
     }
 }

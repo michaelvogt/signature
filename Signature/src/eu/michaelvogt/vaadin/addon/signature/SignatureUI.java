@@ -10,13 +10,15 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
+import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureData;
+
 /**
  * Main UI class
  */
 @SuppressWarnings("serial")
 public class SignatureUI extends UI {
     private Image savedSignature;
-    private CheckBox editable;
+    private CheckBox readOnly;
     private Signature signature;
 
     @Override
@@ -26,9 +28,9 @@ public class SignatureUI extends UI {
 
         content.addComponent(new Label("Sample Signature field"));
 
-        editable = new CheckBox("Editable");
-        editable.addValueChangeListener(new EditingListener());
-        content.addComponent(editable);
+        readOnly = new CheckBox("Read only");
+        readOnly.addValueChangeListener(new EditingListener());
+        content.addComponent(readOnly);
 
         signature = new Signature();
         signature.setWidth("300px");
@@ -43,9 +45,9 @@ public class SignatureUI extends UI {
 
     public class SaveListener implements SaveCallback {
         @Override
-        public void onSave(String imageData) {
-            savedSignature.setSource(new ExternalResource(imageData,
-                    "image/png"));
+        public void onSave(SignatureData imageData) {
+            savedSignature.setSource(new ExternalResource(imageData
+                    .getDataUrl(), "image/png"));
 
             // store imagedata and decide if the signature is allowed to change
             // update shared state
@@ -55,7 +57,7 @@ public class SignatureUI extends UI {
     private class EditingListener implements ValueChangeListener {
         @Override
         public void valueChange(ValueChangeEvent event) {
-            signature.setEditable(editable.getValue());
+            signature.setReadOnly(readOnly.getValue());
         }
     }
 }

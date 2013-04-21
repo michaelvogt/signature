@@ -2,15 +2,13 @@ package eu.michaelvogt.vaadin.addon.signature.client.signature;
 
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.ComponentConnector;
 import com.vaadin.client.ConnectorHierarchyChangeEvent;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
-import com.vaadin.client.ui.AbstractComponentContainerConnector;
+import com.vaadin.client.ui.customfield.CustomFieldConnector;
 import com.vaadin.shared.ui.Connect;
 
 import eu.michaelvogt.vaadin.addon.signature.Signature;
@@ -18,7 +16,7 @@ import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureServerRpc
 import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureState;
 
 @Connect(Signature.class)
-public class SignatureConnector extends AbstractComponentContainerConnector {
+public class SignatureConnector extends CustomFieldConnector {
 
     SignatureServerRpc rpc = RpcProxy.create(SignatureServerRpc.class, this);
 
@@ -32,16 +30,9 @@ public class SignatureConnector extends AbstractComponentContainerConnector {
         getWidget().addCancelHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                getWidget().setSignature(getState().signature);
-                getWidget().setEditable(false);
                 rpc.cancelSigning();
             }
         });
-    }
-
-    @Override
-    protected Widget createWidget() {
-        return GWT.create(SignatureWidget.class);
     }
 
     @Override
@@ -58,13 +49,11 @@ public class SignatureConnector extends AbstractComponentContainerConnector {
     public void onStateChanged(StateChangeEvent stateChangeEvent) {
         super.onStateChanged(stateChangeEvent);
 
-        getWidget().setEditable(getState().isEditable);
-    }
-
-    @Override
-    public void updateCaption(ComponentConnector connector) {
-        // TODO Auto-generated method stub
-
+        if (getState().readOnly) {
+            getWidget().setIsEditing(false);
+        } else {
+            getWidget().setIsEditing(getState().isEditing);
+        }
     }
 
     @Override
