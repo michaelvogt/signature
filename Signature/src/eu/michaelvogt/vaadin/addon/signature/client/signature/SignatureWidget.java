@@ -5,7 +5,9 @@ import java.util.List;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.Touch;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -15,9 +17,17 @@ import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.TouchEndEvent;
+import com.google.gwt.event.dom.client.TouchEndHandler;
+import com.google.gwt.event.dom.client.TouchMoveEvent;
+import com.google.gwt.event.dom.client.TouchMoveHandler;
+import com.google.gwt.event.dom.client.TouchStartEvent;
+import com.google.gwt.event.dom.client.TouchStartHandler;
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.ui.VButton;
 import com.vaadin.client.ui.VCustomComponent;
@@ -38,10 +48,14 @@ public class SignatureWidget extends VCustomComponent {
 
     private HandlerRegistration startDrawHandler;
     private HandlerRegistration stopDrawHandler;
+
+    private HandlerRegistration startTouchHandler;
+    private HandlerRegistration stopTouchHandler;
+
     private HandlerRegistration drawHandler;
 
-    private MouseUpHandler stopHandler;
-    private MouseDownHandler startHandler;
+    private EventHandler stopHandler;
+    private EventHandler startHandler;
 
     private SignatureData imageCache;
 
@@ -57,7 +71,7 @@ public class SignatureWidget extends VCustomComponent {
         if (Canvas.isSupported()) {
             setupWidget();
         } else {
-            // TODO: Inform user that Canvas is needed. Fallback to something?
+            panel.add(new Label("No Canvas available"));
         }
     }
 
@@ -77,8 +91,14 @@ public class SignatureWidget extends VCustomComponent {
         if (isEditable) {
             imageCache = getSignatureData();
 
-            startDrawHandler = canvas.addMouseDownHandler(startHandler);
-            stopDrawHandler = canvas.addMouseUpHandler(stopHandler);
+            startDrawHandler = canvas
+                    .addMouseDownHandler((MouseDownHandler) startHandler);
+            startTouchHandler = canvas
+                    .addTouchStartHandler((TouchStartHandler) startHandler);
+            stopDrawHandler = canvas
+                    .addMouseUpHandler((MouseUpHandler) stopHandler);
+            stopTouchHandler = canvas
+                    .addTouchEndHandler((TouchEndHandler) stopHandler);
 
             panel.add(cancelButton);
             panel.add(clearButton);
@@ -87,11 +107,17 @@ public class SignatureWidget extends VCustomComponent {
             if (null != startDrawHandler) {
                 startDrawHandler.removeHandler();
                 startDrawHandler = null;
+
+                startTouchHandler.removeHandler();
+                startTouchHandler = null;
             }
 
             if (null != stopDrawHandler) {
                 stopDrawHandler.removeHandler();
-                startDrawHandler = null;
+                stopDrawHandler = null;
+
+                stopTouchHandler.removeHandler();
+                stopTouchHandler = null;
             }
 
             panel.remove(cancelButton);
@@ -149,12 +175,23 @@ public class SignatureWidget extends VCustomComponent {
                 canvas.getOffsetHeight());
     }
 
-    private class DrawHandler implements MouseMoveHandler {
+    private class DrawHandler implements MouseMoveHandler, TouchMoveHandler {
         @Override
         public void onMouseMove(MouseMoveEvent event) {
             canvasContext
                     .lineTo(((MouseEvent<?>) event).getX(), (event).getY());
             canvasContext.stroke();
+        }
+
+        @Override
+        public void onTouchMove(TouchMoveEvent event) {
+            JsArray<Touch> touches = event.getTouches();
+            if (0 != touches.length()) {
+                Touch touch = touches.get(0);
+                canvasContext.lineTo(touch.getClientX(), touch.getClientY());
+                canvasContext.stroke();
+                event.preventDefault();
+            }
         }
     }
 
@@ -180,19 +217,40 @@ public class SignatureWidget extends VCustomComponent {
         }
     }
 
-    private class StopHandler implements MouseUpHandler {
+    private class StopHandler implements MouseUpHandler, TouchEndHandler {
         @Override
         public void onMouseUp(MouseUpEvent event) {
+            removeHandler();
+        }
+
+        @Override
+        public void onTouchEnd(TouchEndEvent event) {
+            removeHandler();
+        }
+
+        private void removeHandler() {
             drawHandler.removeHandler();
         }
     }
 
-    private class StartHandler implements MouseDownHandler {
+    private class StartHandler implements MouseDownHandler, TouchStartHandler {
         @Override
         public void onMouseDown(MouseDownEvent event) {
             canvasContext.beginPath();
             canvasContext.moveTo(event.getX(), event.getY());
             drawHandler = canvas.addMouseMoveHandler(new DrawHandler());
+        }
+
+        @Override
+        public void onTouchStart(TouchStartEvent event) {
+            canvasContext.beginPath();
+
+            JsArray<Touch> touches = event.getTouches();
+            if (0 != touches.length()) {
+                Touch touch = touches.get(0);
+                canvasContext.moveTo(touch.getClientX(), touch.getClientY());
+                drawHandler = canvas.addMouseMoveHandler(new DrawHandler());
+            }
         }
     }
 }
