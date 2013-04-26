@@ -1,10 +1,11 @@
-package eu.michaelvogt.vaadin.addon.signature.client.signature;
+package eu.michaelvogt.vaadin.addon.signature.client.field;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.Touch;
@@ -25,26 +26,40 @@ import com.google.gwt.event.dom.client.TouchStartEvent;
 import com.google.gwt.event.dom.client.TouchStartHandler;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.ui.VButton;
 import com.vaadin.client.ui.VCustomComponent;
 
-import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureData;
+import eu.michaelvogt.vaadin.addon.signature.shared.SignatureData;
 
-public class SignatureWidget extends VCustomComponent {
-    public static final String CLASSNAME = "signature";
+public class FieldWidget extends VCustomComponent {
+    private static FieldUiBinder uiBinder = GWT.create(FieldUiBinder.class);
+
+    interface FieldUiBinder extends UiBinder<Widget, FieldWidget> {
+    }
+
     private List<Widget> externalWidgets = new ArrayList<Widget>();
 
-    private FlowPanel panel;
-    private Canvas canvas;
+    @UiField(provided = true)
+    Canvas canvas;
+
+    @UiField
+    VButton clearButton;
+
+    @UiField
+    VButton saveButton;
+
+    @UiField
+    VButton cancelButton;
+
     private Context2d canvasContext;
 
-    private VButton clearButton;
-    private VButton saveButton;
-    private VButton cancelButton;
+    private HTMLPanel fieldWidget;
 
     private HandlerRegistration startDrawHandler;
     private HandlerRegistration stopDrawHandler;
@@ -54,24 +69,24 @@ public class SignatureWidget extends VCustomComponent {
 
     private HandlerRegistration drawHandler;
 
-    private EventHandler stopHandler;
     private EventHandler startHandler;
+    private EventHandler stopHandler;
 
     private SignatureData imageCache;
 
-    public SignatureWidget() {
-        panel = new FlowPanel();
-        super.add(panel);
-
-        setStyleName(CLASSNAME);
-
-        startHandler = new StartHandler();
-        stopHandler = new StopHandler();
-
+    public FieldWidget() {
         if (Canvas.isSupported()) {
+            startHandler = new StartHandler();
+            stopHandler = new StopHandler();
+
+            canvas = Canvas.createIfSupported();
+
+            fieldWidget = (HTMLPanel) uiBinder.createAndBindUi(this);
+            super.add(fieldWidget);
+
             setupWidget();
         } else {
-            panel.add(new Label("No Canvas available"));
+            super.add(new Label("No Canvas available"));
         }
     }
 
@@ -87,8 +102,8 @@ public class SignatureWidget extends VCustomComponent {
         return new SignatureData(canvas.toDataUrl());
     }
 
-    public void setIsEditing(boolean isEditable) {
-        if (isEditable) {
+    public void setIsEditing(boolean isEditing) {
+        if (isEditing) {
             imageCache = getSignatureData();
 
             startDrawHandler = canvas
@@ -100,9 +115,9 @@ public class SignatureWidget extends VCustomComponent {
             stopTouchHandler = canvas
                     .addTouchEndHandler((TouchEndHandler) stopHandler);
 
-            panel.add(cancelButton);
-            panel.add(clearButton);
-            panel.add(saveButton);
+            cancelButton.setVisible(true);
+            clearButton.setVisible(true);
+            saveButton.setVisible(true);
         } else {
             if (null != startDrawHandler) {
                 startDrawHandler.removeHandler();
@@ -120,9 +135,9 @@ public class SignatureWidget extends VCustomComponent {
                 stopTouchHandler = null;
             }
 
-            panel.remove(cancelButton);
-            panel.remove(clearButton);
-            panel.remove(saveButton);
+            cancelButton.setVisible(false);
+            clearButton.setVisible(false);
+            saveButton.setVisible(false);
         }
     }
 
@@ -136,29 +151,15 @@ public class SignatureWidget extends VCustomComponent {
 
     @Override
     public void add(Widget widget) {
-        panel.add(widget);
+        fieldWidget.add(widget);
         externalWidgets.add(widget);
     }
 
     private void setupWidget() {
-        canvas = Canvas.createIfSupported();
-        panel.add(canvas);
-
         canvasContext = canvas.getContext2d();
 
-        clearButton = new VButton();
-        clearButton.setText("Clear");
-        clearButton.addStyleName(CLASSNAME + "-clear");
         clearButton.addClickHandler(new ClearHandler());
-
-        saveButton = new VButton();
-        saveButton.setText("Save");
-        saveButton.addStyleName(CLASSNAME + "-save");
         saveButton.addClickHandler(new SaveHandler());
-
-        cancelButton = new VButton();
-        cancelButton.setText("Cancel");
-        cancelButton.addStyleName(CLASSNAME + "-cancel");
         cancelButton.addClickHandler(new CancelHandler());
     }
 

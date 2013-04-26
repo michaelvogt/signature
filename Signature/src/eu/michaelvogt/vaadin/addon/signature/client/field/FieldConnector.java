@@ -1,4 +1,4 @@
-package eu.michaelvogt.vaadin.addon.signature.client.signature;
+package eu.michaelvogt.vaadin.addon.signature.client.field;
 
 import java.util.List;
 
@@ -11,16 +11,16 @@ import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.customfield.CustomFieldConnector;
 import com.vaadin.shared.ui.Connect;
 
-import eu.michaelvogt.vaadin.addon.signature.Signature;
-import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureServerRpc;
-import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureState;
+import eu.michaelvogt.vaadin.addon.signature.server.field.Field;
+import eu.michaelvogt.vaadin.addon.signature.shared.SignatureServerRpc;
+import eu.michaelvogt.vaadin.addon.signature.shared.SignatureState;
 
-@Connect(Signature.class)
-public class SignatureConnector extends CustomFieldConnector {
+@Connect(Field.class)
+public class FieldConnector extends CustomFieldConnector {
 
     SignatureServerRpc rpc = RpcProxy.create(SignatureServerRpc.class, this);
 
-    public SignatureConnector() {
+    public FieldConnector() {
         getWidget().addSaveHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 rpc.saveSignature(getWidget().getSignatureData());
@@ -36,8 +36,8 @@ public class SignatureConnector extends CustomFieldConnector {
     }
 
     @Override
-    public SignatureWidget getWidget() {
-        return (SignatureWidget) super.getWidget();
+    public FieldWidget getWidget() {
+        return (FieldWidget) super.getWidget();
     }
 
     @Override
@@ -60,7 +60,7 @@ public class SignatureConnector extends CustomFieldConnector {
     public void onConnectorHierarchyChange(
             ConnectorHierarchyChangeEvent connectorHierarchyChangeEvent) {
         List<ComponentConnector> children = getChildComponents();
-        SignatureWidget widget = getWidget();
+        FieldWidget widget = getWidget();
         widget.clear();
         for (ComponentConnector connector : children) {
             widget.add(connector.getWidget());

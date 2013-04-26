@@ -1,4 +1,4 @@
-package eu.michaelvogt.vaadin.addon.signature;
+package eu.michaelvogt.vaadin.addon.signature.server.field;
 
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
@@ -11,41 +11,30 @@ import com.vaadin.ui.Image;
 import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 
-import eu.michaelvogt.vaadin.addon.signature.shared.signature.SignatureData;
+import eu.michaelvogt.vaadin.addon.signature.server.SaveListener;
+import eu.michaelvogt.vaadin.addon.signature.shared.SignatureData;
 
 /**
  * Main UI class
  */
 @SuppressWarnings("serial")
-public class SignatureUI extends UI {
+public class FieldUI extends UI {
     private AbstractLayout content;
 
     private CheckBox readOnly;
-    private Signature signature;
+    private CheckBox externalSigning;
+
+    private Field signature;
 
     private Image savedSignature;
 
-    private boolean isMobile = false;
-
     @Override
     protected void init(VaadinRequest request) {
-        String location = request.getParameter("v-loc");
-        String[] split = location.split("#");
-        if (2 > split.length) {
-            createFullLayout();
-        } else {
-            createEntryLayout(split[1]);
-        }
-
+        createLayout();
         setContent(content);
     }
 
-    private void createEntryLayout(String string) {
-        isMobile = true;
-        createSignatureWidget("100%", "100%");
-    }
-
-    private void createFullLayout() {
+    private void createLayout() {
         content = new CssLayout();
         content.setSizeFull();
         content.addComponent(new Label("Sample Signature field"));
@@ -54,6 +43,10 @@ public class SignatureUI extends UI {
         readOnly.addValueChangeListener(new EditingListener());
         content.addComponent(readOnly);
 
+        externalSigning = new CheckBox("External Signing");
+        externalSigning.addValueChangeListener(new ExternalSigningListener());
+        content.addComponent(externalSigning);
+
         createSignatureWidget();
 
         savedSignature = new Image();
@@ -61,32 +54,18 @@ public class SignatureUI extends UI {
     }
 
     private void createSignatureWidget() {
-        content = new CssLayout();
-        content.setSizeUndefined();
-        content.addComponent(new Label("Sample Signature field"));
-
-        signature = new Signature();
-        signature.setWidth("100%");
-        signature.setHeight("100%");
-        signature.setCaption("Signature");
-        signature.addSaveListener(new SaveListener());
-        signature.allowExternalSigning();
+        signature = new Field();
+        signature.setSizeFull();
+        signature.setCaption("Please sign here:");
+        signature.addSaveListener(new SaveListenerImpl());
         content.addComponent(signature);
     }
 
-    private void createSignatureWidget(String width, String height) {
-        createSignatureWidget();
-        content.setWidth(width);
-        content.setHeight(height);
-    }
-
-    public class SaveListener implements SaveCallback {
+    private class SaveListenerImpl implements SaveListener {
         @Override
         public void onSave(SignatureData imageData) {
-            if (!isMobile) {
-                savedSignature.setSource(new ExternalResource(imageData
-                        .getDataUrl(), "image/png"));
-            }
+            savedSignature.setSource(new ExternalResource(imageData
+                    .getDataUrl(), "image/png"));
 
             // store imagedata and decide if the signature is allowed to change
             // update shared state
@@ -97,6 +76,13 @@ public class SignatureUI extends UI {
         @Override
         public void valueChange(ValueChangeEvent event) {
             signature.setReadOnly(readOnly.getValue());
+        }
+    }
+
+    private class ExternalSigningListener implements ValueChangeListener {
+        @Override
+        public void valueChange(ValueChangeEvent event) {
+            signature.allowExternalSigning(externalSigning.getValue());
         }
     }
 }

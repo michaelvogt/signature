@@ -1,4 +1,4 @@
-package eu.michaelvogt.vaadin.addon.signature.shared.signature;
+package eu.michaelvogt.vaadin.addon.signature.shared;
 
 import java.io.Serializable;
 

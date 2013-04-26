@@ -40,9 +40,4 @@
 
 	<source path="client"/>
 	<source path="shared"/>
-    
-
-    <inherits name="eu.michaelvogt.vaadin.attribute.AttributeWidgetset" />
-
-    <inherits name="fi.jasoft.qrcode.QrcodeWidgetset" />
 </module>

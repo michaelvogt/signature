@@ -1,0 +1,12 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:c="urn:import:com.google.gwt.canvas.client"
+	xmlns:v="urn:import:com.vaadin.client.ui">
+	<g:HTMLPanel styleName="signature">
+		<c:Canvas ui:field="canvas" styleName="v-textarea v-widget"></c:Canvas>
+		<v:VButton ui:field="clearButton" text="Clear" styleName="signature-clear"></v:VButton>
+		<v:VButton ui:field="saveButton" text="Save" styleName="signature-save"></v:VButton>
+		<v:VButton ui:field="cancelButton" text="Cancel" styleName="signature-cancel"></v:VButton>
+	</g:HTMLPanel>
+</ui:UiBinder> 

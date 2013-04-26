@@ -1,4 +1,4 @@
-package eu.michaelvogt.vaadin.addon.signature.shared.signature;
+package eu.michaelvogt.vaadin.addon.signature.shared;
 
 import com.vaadin.shared.communication.ServerRpc;
 
