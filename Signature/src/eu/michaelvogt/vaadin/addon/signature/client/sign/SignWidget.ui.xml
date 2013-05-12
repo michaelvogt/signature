@@ -5,7 +5,7 @@
 	xmlns:v="urn:import:com.vaadin.client.ui">
 	
 	<g:HTMLPanel styleName="signature">
-		<c:Canvas ui:field="canvas" styleName="v-textarea v-widget"></c:Canvas>
+		<c:Canvas ui:field="canvas" styleName="v-textarea v-widget fullscreen"></c:Canvas>
 		<v:VButton ui:field="clearButton" text="Clear"></v:VButton>
 		<v:VButton ui:field="saveButton" text="Save"></v:VButton>
 		<v:VButton ui:field="cancelButton" text="Cancel"></v:VButton>

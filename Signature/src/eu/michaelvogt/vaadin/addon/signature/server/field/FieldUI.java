@@ -12,6 +12,7 @@ import com.vaadin.ui.Label;
 import com.vaadin.ui.UI;
 
 import eu.michaelvogt.vaadin.addon.signature.server.SaveListener;
+import eu.michaelvogt.vaadin.addon.signature.server.Signature;
 import eu.michaelvogt.vaadin.addon.signature.shared.SignatureData;
 
 /**
@@ -24,8 +25,7 @@ public class FieldUI extends UI {
     private CheckBox readOnly;
     private CheckBox externalSigning;
 
-    private Field signature;
-
+    private Signature signature;
     private Image savedSignature;
 
     @Override
@@ -36,7 +36,7 @@ public class FieldUI extends UI {
 
     private void createLayout() {
         content = new CssLayout();
-        content.setSizeFull();
+        content.setSizeUndefined();
         content.addComponent(new Label("Sample Signature field"));
 
         readOnly = new CheckBox("Read only");
@@ -82,7 +82,9 @@ public class FieldUI extends UI {
     private class ExternalSigningListener implements ValueChangeListener {
         @Override
         public void valueChange(ValueChangeEvent event) {
-            signature.allowExternalSigning(externalSigning.getValue());
+            // FIXME: Ugly
+            ((Field) signature)
+                    .allowExternalSigning(externalSigning.getValue());
         }
     }
 }

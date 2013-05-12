@@ -6,20 +6,14 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.vaadin.client.ComponentConnector;
 import com.vaadin.client.ConnectorHierarchyChangeEvent;
-import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
-import com.vaadin.client.ui.customfield.CustomFieldConnector;
 import com.vaadin.shared.ui.Connect;
 
+import eu.michaelvogt.vaadin.addon.signature.client.SignatureConnector;
 import eu.michaelvogt.vaadin.addon.signature.server.field.Field;
-import eu.michaelvogt.vaadin.addon.signature.shared.SignatureServerRpc;
-import eu.michaelvogt.vaadin.addon.signature.shared.SignatureState;
 
 @Connect(Field.class)
-public class FieldConnector extends CustomFieldConnector {
-
-    SignatureServerRpc rpc = RpcProxy.create(SignatureServerRpc.class, this);
-
+public class FieldConnector extends SignatureConnector {
     public FieldConnector() {
         getWidget().addSaveHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -38,11 +32,6 @@ public class FieldConnector extends CustomFieldConnector {
     @Override
     public FieldWidget getWidget() {
         return (FieldWidget) super.getWidget();
-    }
-
-    @Override
-    public SignatureState getState() {
-        return (SignatureState) super.getState();
     }
 
     @Override

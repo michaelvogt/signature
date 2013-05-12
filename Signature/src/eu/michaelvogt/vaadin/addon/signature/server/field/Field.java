@@ -19,26 +19,21 @@ import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Button.ClickEvent;
 import com.vaadin.ui.Button.ClickListener;
-import com.vaadin.ui.Component;
 import com.vaadin.ui.CssLayout;
-import com.vaadin.ui.CustomField;
 import com.vaadin.ui.Image;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.Window;
 
-import eu.michaelvogt.vaadin.addon.signature.server.SaveListener;
+import eu.michaelvogt.vaadin.addon.signature.server.Signature;
 import eu.michaelvogt.vaadin.addon.signature.shared.SignatureData;
 import eu.michaelvogt.vaadin.addon.signature.shared.SignatureServerRpc;
-import eu.michaelvogt.vaadin.addon.signature.shared.SignatureState;
 
-public class Field extends CustomField<SignatureData> {
+public class Field extends Signature {
     public static final String SIGNATURE_STYLE = "signature";
-    public static final String IMAGE_URL = "signatureqrcode.png";
 
-    private CssLayout layout;
     private Button editButton;
     private Button externButton;
-    private SaveListener saveListener;
+
     private boolean isExternalAllowed;
 
     private SignatureServerRpc rpc = new SignatureServerRpcImpl();
@@ -50,7 +45,10 @@ public class Field extends CustomField<SignatureData> {
                 throws IOException {
             if (("/" + IMAGE_URL).equals(request.getPathInfo())) {
                 BitMatrix qrMatrix;
-                String content = request.getParameter("content");
+
+                String key = request.getParameter("key");
+                String content = request.getParameter("content")
+                        + "&signing=fullscreen&key=" + key;
 
                 try {
                     qrMatrix = new QRCodeWriter().encode(content,
@@ -82,28 +80,9 @@ public class Field extends CustomField<SignatureData> {
     }
 
     @Override
-    protected Component initContent() {
-        return layout;
-    }
-
-    @Override
-    public Class<SignatureData> getType() {
-        return SignatureData.class;
-    }
-
-    @Override
-    public SignatureState getState() {
-        return (SignatureState) super.getState();
-    }
-
-    @Override
     public void detach() {
         super.detach();
         getSession().removeRequestHandler(requestHandler);
-    }
-
-    public void addSaveListener(SaveListener saveListener) {
-        this.saveListener = saveListener;
     }
 
     @Override
@@ -155,18 +134,14 @@ public class Field extends CustomField<SignatureData> {
         @Override
         public void buttonClick(ClickEvent event) {
             // Create specific url for sign ui
-            UUID key = UUID.randomUUID();
-            String thismobileURL = Page.getCurrent().getLocation().toString()
-                    + "#" + key;
+            signatureId = UUID.randomUUID();
+            String thismobileURL = Page.getCurrent().getLocation().toString();
 
             // Show code on top of signature field
             Window qr = new Window();
             qr.setContent(new Image(null, new ExternalResource(IMAGE_URL
-                    + "?content=" + thismobileURL)));
+                    + "?content=" + thismobileURL + "&key=" + signatureId)));
             UI.getCurrent().addWindow(qr);
-
-            // When url is accessed, show full screen canvas ui
-            // When saved, send to original ui
         }
     }
 
@@ -177,15 +152,15 @@ public class Field extends CustomField<SignatureData> {
             getState().isEditing = false;
             setValue(imageData);
 
-            if (null != saveListener) {
-                saveListener.onSave(imageData);
-            }
+            Field.this.saveSignature(imageData);
         }
 
         @Override
         public void cancelSigning() {
             layout.addComponent(editButton);
             getState().isEditing = false;
+
+            Field.this.cancelSigning();
         }
     }
 }
