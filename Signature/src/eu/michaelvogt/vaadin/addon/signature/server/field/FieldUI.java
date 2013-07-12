@@ -1,5 +1,6 @@
 package eu.michaelvogt.vaadin.addon.signature.server.field;
 
+import com.vaadin.annotations.Push;
 import com.vaadin.data.Property.ValueChangeEvent;
 import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.server.ExternalResource;
@@ -18,7 +19,7 @@ import eu.michaelvogt.vaadin.addon.signature.shared.SignatureData;
 /**
  * Main UI class
  */
-@SuppressWarnings("serial")
+@Push
 public class FieldUI extends UI {
     private AbstractLayout content;
 

@@ -1,5 +1,6 @@
 package eu.michaelvogt.vaadin.addon.signature.server.sign;
 
+import com.vaadin.annotations.Push;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.ui.AbstractLayout;
 import com.vaadin.ui.CssLayout;
@@ -11,15 +12,16 @@ import eu.michaelvogt.vaadin.addon.signature.server.SaveListener;
 import eu.michaelvogt.vaadin.addon.signature.server.Signature;
 import eu.michaelvogt.vaadin.addon.signature.shared.SignatureData;
 
+@Push
 public class SignUI extends UI {
     private AbstractLayout content;
-
     private Signature signature;
 
     @Override
     protected void init(VaadinRequest request) {
         createLayout();
         setContent(content);
+        setSizeFull();
     }
 
     private void createLayout() {

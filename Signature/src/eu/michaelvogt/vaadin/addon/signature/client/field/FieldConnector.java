@@ -43,6 +43,10 @@ public class FieldConnector extends SignatureConnector {
         } else {
             getWidget().setIsEditing(getState().isEditing);
         }
+
+        if (stateChangeEvent.hasPropertyChanged("imageData")) {
+            getWidget().setSignature(getState().imageData);
+        }
     }
 
     @Override

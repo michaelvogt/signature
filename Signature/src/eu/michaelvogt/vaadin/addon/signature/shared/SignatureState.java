@@ -8,4 +8,9 @@ public class SignatureState extends AbstractFieldState {
      */
     public boolean isEditing = false;
 
+    /**
+     * The Signature that is currently displayed
+     */
+    public SignatureData imageData;
+
 }

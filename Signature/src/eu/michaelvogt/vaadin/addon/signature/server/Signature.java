@@ -15,6 +15,7 @@ public abstract class Signature extends CustomField<SignatureData> implements
 
     protected CssLayout layout;
 
+    // TODO: make these lists
     protected SaveListener saveListener;
     protected CancelListener cancelListener;
 

@@ -24,6 +24,8 @@ import com.vaadin.ui.Image;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.Window;
 
+import eu.michaelvogt.vaadin.addon.signature.server.BroadcastListener;
+import eu.michaelvogt.vaadin.addon.signature.server.Broadcaster;
 import eu.michaelvogt.vaadin.addon.signature.server.Signature;
 import eu.michaelvogt.vaadin.addon.signature.shared.SignatureData;
 import eu.michaelvogt.vaadin.addon.signature.shared.SignatureServerRpc;
@@ -111,6 +113,14 @@ public class Field extends Signature {
         }
     }
 
+    public void setSignature(SignatureData imageData) {
+        getState().imageData = imageData;
+    }
+
+    public SignatureData getImageData() {
+        return getState().imageData;
+    }
+
     private void buildMainLayout() {
         layout = new CssLayout();
 
@@ -134,11 +144,26 @@ public class Field extends Signature {
         @Override
         public void buttonClick(ClickEvent event) {
             // Create specific url for sign ui
-            signatureId = UUID.randomUUID();
             String thismobileURL = Page.getCurrent().getLocation().toString();
 
             // Show code on top of signature field
             Window qr = new Window();
+
+            if (signatureId == null) {
+                signatureId = UUID.randomUUID();
+                Broadcaster.register(signatureId, new BroadcastListener() {
+                    @Override
+                    public void updateSignature(final SignatureData imageData) {
+                        UI.getCurrent().access(new Runnable() {
+                            @Override
+                            public void run() {
+                                setSignature(imageData);
+                            }
+                        });
+                    }
+                });
+            }
+
             qr.setContent(new Image(null, new ExternalResource(IMAGE_URL
                     + "?content=" + thismobileURL + "&key=" + signatureId)));
             UI.getCurrent().addWindow(qr);

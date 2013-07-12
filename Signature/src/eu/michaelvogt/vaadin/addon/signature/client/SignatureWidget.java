@@ -124,6 +124,10 @@ public class SignatureWidget extends VCustomComponent {
         }
     }
 
+    public void setSignature(SignatureData signature) {
+        setSignature(signature.getDataUrl());
+    }
+
     public void setSignature(String signature) {
         clearCanvas();
 
